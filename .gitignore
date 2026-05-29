@@ -10,4 +10,3 @@ wheels/
 # Virtual environments
 .venv
 node_modules
-package*-lock.json
