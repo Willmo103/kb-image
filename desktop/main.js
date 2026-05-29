@@ -434,3 +434,46 @@ ipcMain.handle('get-settings', async () => {
 ipcMain.handle('save-settings', async (event, settings) => {
   return saveSettings(settings);
 });
+
+ipcMain.handle('get-unprocessed-images', async (event, { type, limit }) => {
+  const tables = await new Promise((resolve) => {
+    db.all("SELECT name FROM sqlite_master WHERE type='table'", (err, rows) => {
+      if (err) resolve([]);
+      else resolve(rows.map(r => r.name));
+    });
+  });
+
+  let sqlParts = [];
+  if (type === 'description') {
+    if (tables.includes('image_files')) {
+      sqlParts.push("SELECT image_hash, file_name, 'file' as origin FROM image_files WHERE description IS NULL OR description = ''");
+    }
+    if (tables.includes('web_images')) {
+      sqlParts.push("SELECT image_hash, file_name, 'web' as origin FROM web_images WHERE description IS NULL OR description = ''");
+    }
+  } else if (type === 'tags') {
+    if (tables.includes('image_files')) {
+      sqlParts.push("SELECT image_hash, file_name, 'file' as origin FROM image_files WHERE tags IS NULL OR tags = '' OR tags = '[]'");
+    }
+    if (tables.includes('web_images')) {
+      sqlParts.push("SELECT image_hash, file_name, 'web' as origin FROM web_images WHERE tags IS NULL OR tags = '' OR tags = '[]'");
+    }
+  } else if (type === 'classification') {
+    if (tables.includes('image_files')) {
+      sqlParts.push("SELECT image_hash, file_name, 'file' as origin FROM image_files WHERE classification IS NULL OR classification = '' OR classification = 'other'");
+    }
+    if (tables.includes('web_images')) {
+      sqlParts.push("SELECT image_hash, file_name, 'web' as origin FROM web_images WHERE classification IS NULL OR classification = '' OR classification = 'other'");
+    }
+  }
+
+  if (sqlParts.length === 0) return [];
+
+  let sql = sqlParts.join(' UNION ALL ') + " LIMIT ?";
+  return new Promise((resolve, reject) => {
+    db.all(sql, [limit], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+});

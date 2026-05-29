@@ -10,5 +10,6 @@ contextBridge.exposeInMainWorld('api', {
   aiTagImage: (payload) => ipcRenderer.invoke('ai-tag-image', payload),
   aiClassifyImage: (payload) => ipcRenderer.invoke('ai-classify-image', payload),
   getSettings: () => ipcRenderer.invoke('get-settings'),
-  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings)
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  getUnprocessedImages: (args) => ipcRenderer.invoke('get-unprocessed-images', args)
 });

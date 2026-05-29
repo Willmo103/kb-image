@@ -64,17 +64,31 @@ export default function App() {
     }
   }, [darkMode]);
 
-  // Load AI settings on mount
+  // Load AI settings on mount with defaults
   useEffect(() => {
     window.api.getSettings()
       .then((settings) => {
-        setSettingsHost(settings.ollama_host);
-        setSettingsModel(settings.ollama_model);
+        setSettingsHost(settings?.ollama_host || 'http://localhost:11414');
+        setSettingsModel(settings?.ollama_model || 'gemma4:latest');
       })
       .catch((err) => {
         console.error('Error loading AI settings on mount:', err);
       });
   }, []);
+
+  // Re-fetch saved settings whenever settings modal is opened
+  useEffect(() => {
+    if (showSettings) {
+      window.api.getSettings()
+        .then((settings) => {
+          setSettingsHost(settings?.ollama_host || 'http://localhost:11414');
+          setSettingsModel(settings?.ollama_model || 'gemma4:latest');
+        })
+        .catch((err) => {
+          console.error('Error loading AI settings on modal open:', err);
+        });
+    }
+  }, [showSettings]);
 
   // Reset offset and fetch when filters change
   useEffect(() => {
