@@ -1,8 +1,18 @@
-from models import BaseImage
-from config import Client, IMAGE_DESCRIPTION_MODEL
-from ollama import *
+"""
+Description: This module is used to describe images using Ollama.
 
-_sys_prompt = """
+Dependencies:
+- httpx
+- sqlite-utils
+- ollama
+"""
+
+from ollama import Message
+
+from .config import IMAGE_DESCRIPTION_MODEL, Client
+from .models import BaseImage
+
+_SYS_PROMPT = """
 # You are an image description assistant.
 
 ## Context
@@ -38,12 +48,21 @@ Your response may be in any format you choose to represent the description, the 
 
 
 def describe_image(image: BaseImage) -> str:
+    """
+    Describe an image using Ollama.
+
+    Args:
+        image: Image to describe
+
+    Returns:
+        Description of the image
+    """
     response = Client.chat(
         model=IMAGE_DESCRIPTION_MODEL,
         messages=[
             Message(
                 role="system",
-                content=_sys_prompt,
+                content=_SYS_PROMPT,
             ),
             Message(
                 role="user",
@@ -53,5 +72,5 @@ def describe_image(image: BaseImage) -> str:
         ],
         think=False,
     )
-    description = response.text.strip()
+    description = response.message.content.strip()  # pylint: disable=no-member
     return description

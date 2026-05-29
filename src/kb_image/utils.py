@@ -1,21 +1,32 @@
+"""
+utils.py
+Contains helper functions for image processing.
+"""
+
 import base64
 import hashlib
 import io
 import os
 from pathlib import Path
 from typing import Optional
+
 from PIL import ExifTags, Image
 from PIL.TiffImagePlugin import TiffImageFile
-from config import (
-    IMAGE_FORMATS,
-    MIN_SIZE_WIDTH,
-    MIN_SIZE_HEIGHT,
-    MIN_FILE_SIZE,
-    THUMBNAIL_SIZE,
-)
+
+from .config import (IMAGE_FORMATS, MIN_FILE_SIZE, MIN_SIZE_HEIGHT,
+                     MIN_SIZE_WIDTH, THUMBNAIL_SIZE)
 
 
 def is_valid_image(file_path: Path) -> bool:
+    """
+    Check if a file is a valid image.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        True if the file is a valid image, False otherwise
+    """
     if file_path.suffix.lower() not in IMAGE_FORMATS:
         return False
     try:
@@ -32,6 +43,15 @@ def is_valid_image(file_path: Path) -> bool:
 
 
 def generate_image_hash(file_path: Path) -> str:
+    """
+    Generate a hash of an image file.
+
+    Args:
+        file_path: Path to the image file
+
+    Returns:
+        Hash of the image file
+    """
     sha256 = hashlib.sha256()
     with open(file_path, "rb") as f:
         while chunk := f.read(65536):
@@ -42,13 +62,22 @@ def generate_image_hash(file_path: Path) -> str:
 def generate_thumbnail(
     file_path: Path, size: tuple[int, int] = THUMBNAIL_SIZE
 ) -> Optional[str]:
+    """
+    Generate a thumbnail from an image file.
+
+    Args:
+        file_path: Path to the image file
+        size: Size of the thumbnail
+
+    Returns:
+        Base64 encoded thumbnail
+    """
     try:
         with Image.open(file_path) as img:
             # Handle RAW and Transparency: Convert to RGB for JPEG compatibility
             if img.mode in ("RGBA", "P", "CMYK"):
                 img = img.convert("RGB")
 
-            size = size
             img.thumbnail(size)
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG")
@@ -62,13 +91,22 @@ def generate_thumbnail(
 def generate_thumbnail_from_bytes(
     img_data: bytes, size: tuple[int, int] = THUMBNAIL_SIZE
 ) -> Optional[str]:
+    """
+    Generate a thumbnail from image data.
+
+    Args:
+        img_data: Image data in bytes
+        size: Size of the thumbnail
+
+    Returns:
+        Base64 encoded thumbnail
+    """
     try:
         with Image.open(io.BytesIO(img_data)) as img:
             # Handle RAW and Transparency: Convert to RGB for JPEG compatibility
             if img.mode in ("RGBA", "P", "CMYK"):
                 img = img.convert("RGB")
 
-            size = size
             img.thumbnail(size)
             buffer = io.BytesIO()
             img.save(buffer, format="JPEG")
@@ -80,6 +118,15 @@ def generate_thumbnail_from_bytes(
 
 
 def generate_base64_image(file_path: Path) -> Optional[str]:
+    """
+    Generate a base64 encoded image from an image file.
+
+    Args:
+        file_path: Path to the image file
+
+    Returns:
+        Base64 encoded image
+    """
     try:
         with open(file_path, "rb") as f:
             img_b64 = base64.b64encode(f.read()).decode("utf-8")
@@ -90,6 +137,15 @@ def generate_base64_image(file_path: Path) -> Optional[str]:
 
 
 def get_valid_file_stats(file_path: Path) -> Optional[os.stat_result]:
+    """
+    Get file stats if the file exists and is a file.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        File stats if the file exists and is a file, None otherwise
+    """
     if not file_path.exists():
         return None
     if not file_path.is_file():

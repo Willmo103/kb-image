@@ -1,3 +1,4 @@
+import os
 import ollama
 
 IMAGE_FORMATS = [
@@ -16,7 +17,9 @@ MIN_SIZE_WIDTH = 400
 MIN_FILE_SIZE = 10 * 1024  # 10 KB
 THUMBNAIL_SIZE = (300, 300)
 
-Client = ollama.Client()
+# Configure Ollama host from environment, falling back to network address if not set
+ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11414")
+Client = ollama.Client(host=ollama_host)
 
 IMAGE_CLASSIFICATION_MODEL = "gemma4:latest"
 IMAGE_DESCRIPTION_MODEL = "gemma4:latest"

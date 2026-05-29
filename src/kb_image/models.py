@@ -1,3 +1,8 @@
+"""
+models.py
+Contains Pydantic models for image data.
+"""
+
 import json
 from typing import Optional
 
@@ -5,6 +10,10 @@ from pydantic import BaseModel, field_validator, model_validator
 
 
 class ImageClasses(str):
+    """
+    Enum for image classes.
+    """
+
     NATURE = "nature"
     PEOPLE = "people"
     SCREENSHOTS = "screenshots"
@@ -25,6 +34,10 @@ class ImageClasses(str):
 
 
 class BaseImage(BaseModel):
+    """
+    Base model for image data.
+    """
+
     file_name: str
     extension: str
     size: int
@@ -44,6 +57,9 @@ class BaseImage(BaseModel):
 
     @field_validator("tags", mode="before")
     def validate_tags(cls, v):
+        """
+        Validate tags.
+        """
         if isinstance(v, str):
             try:
                 return json.loads(v)
@@ -55,6 +71,9 @@ class BaseImage(BaseModel):
 
     @field_validator("exif_data", mode="before")
     def validate_exif_data(cls, v):
+        """
+        Validate exif data.
+        """
         if isinstance(v, str):
             try:
                 return json.loads(v)
@@ -66,6 +85,9 @@ class BaseImage(BaseModel):
 
     @model_validator(mode="before")
     def validate_classification(cls, values):
+        """
+        Validate classification.
+        """
         classification = values.get("classification")
         if classification and classification not in ImageClasses.image_classes:
             raise ValueError(
@@ -75,29 +97,52 @@ class BaseImage(BaseModel):
 
     @property
     def md_image(self) -> str:
-        f"[{self.file_name}](data:image/{self.extension};base64,{self.image})"
+        """
+        Markdown image.
+        """
+        return f"[{self.file_name}](data:image/{self.extension};base64,{self.image})"
 
     @property
     def md_thumbnail(self) -> str:
-        f"[{self.file_name}](data:image/jpeg;base64,{self.thumbnail})"
+        """
+        Markdown thumbnail.
+        """
+        return f"[{self.file_name}](data:image/jpeg;base64,{self.thumbnail})"
 
     @property
     def storage_filename(self) -> str:
+        """
+        Storage filename.
+        """
         return f"{self.image_hash}.{self.extension}"
 
     def __eq__(self, other):
+        """
+        Check if two BaseImages are equal.
+        """
         if not isinstance(other, BaseImage):
             return NotImplemented
         return self.image_hash == other.image_hash
 
 
 class ImageFile(BaseImage):
+    """
+    Image file model.
+    """
+
     path: str
 
     @property
     def Path(self) -> str:
+        """
+        Path of the image file.
+        """
         return self.path
 
 
 class WebImage(BaseImage):
+    """
+    Web image model.
+    """
+
     url: str
