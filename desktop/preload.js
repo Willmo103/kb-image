@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld('api', {
   importWebImage: (url) => ipcRenderer.invoke('import-web-image', url),
   aiDescribeImage: (payload) => ipcRenderer.invoke('ai-describe-image', payload),
   aiTagImage: (payload) => ipcRenderer.invoke('ai-tag-image', payload),
-  aiClassifyImage: (payload) => ipcRenderer.invoke('ai-classify-image', payload)
+  aiClassifyImage: (payload) => ipcRenderer.invoke('ai-classify-image', payload),
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings)
 });

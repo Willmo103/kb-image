@@ -11,7 +11,8 @@ import {
   Sun, 
   Moon, 
   ChevronRight, 
-  RefreshCw 
+  RefreshCw,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 export default function App() {
@@ -39,6 +40,11 @@ export default function App() {
   const [aiTagging, setAiTagging] = useState(false);
   const [aiClassifying, setAiClassifying] = useState(false);
   
+  // AI settings states
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsHost, setSettingsHost] = useState('http://localhost:11414');
+  const [settingsModel, setSettingsModel] = useState('gemma4:latest');
+  
   const classifications = [
     'nature', 'people', 'screenshots', 'diagrams', 'nsfw', 'memes', 'other'
   ];
@@ -57,6 +63,18 @@ export default function App() {
       document.body.style.color = '#3C2F2F';
     }
   }, [darkMode]);
+
+  // Load AI settings on mount
+  useEffect(() => {
+    window.api.getSettings()
+      .then((settings) => {
+        setSettingsHost(settings.ollama_host);
+        setSettingsModel(settings.ollama_model);
+      })
+      .catch((err) => {
+        console.error('Error loading AI settings on mount:', err);
+      });
+  }, []);
 
   // Reset offset and fetch when filters change
   useEffect(() => {
@@ -279,6 +297,21 @@ export default function App() {
     }
   };
 
+  // Save settings via IPC
+  const handleSaveSettings = async () => {
+    try {
+      await window.api.saveSettings({
+        ollama_host: settingsHost,
+        ollama_model: settingsModel
+      });
+      alert('AI settings saved successfully.');
+      setShowSettings(false);
+    } catch (err) {
+      console.error('Error saving AI settings:', err);
+      alert(`Error saving settings: ${err.message}`);
+    }
+  };
+
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -331,6 +364,14 @@ export default function App() {
             title="Toggle theme"
           >
             {darkMode ? <Sun size={18} className="text-retro-yellow" /> : <Moon size={18} className="text-retro-blue" />}
+          </button>
+
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 hover:bg-retro-panel-light dark:hover:bg-retro-panel-dark rounded-full transition-colors text-retro-text-light dark:text-retro-text-dark"
+            title="AI Settings"
+          >
+            <SettingsIcon size={18} />
           </button>
         </div>
       </header>
@@ -664,6 +705,65 @@ export default function App() {
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-retro-bg-light dark:bg-retro-bg-dark border border-retro-border-light dark:border-retro-border-dark p-6 rounded shadow-2xl w-full max-w-md space-y-4 text-retro-text-light dark:text-retro-text-dark">
+            <div className="flex items-center justify-between border-b border-retro-border-light dark:border-retro-border-dark pb-3">
+              <h2 className="text-lg font-bold flex items-center space-x-2">
+                <SettingsIcon size={18} className="text-retro-orange" />
+                <span>AI Connection Settings</span>
+              </h2>
+              <button 
+                onClick={() => setShowSettings(false)}
+                className="hover:text-retro-red transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="space-y-4 py-2">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider opacity-60">Ollama Host</label>
+                <input
+                  type="text"
+                  value={settingsHost}
+                  onChange={(e) => setSettingsHost(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-retro-panel-light dark:bg-retro-panel-dark border border-retro-border-light dark:border-retro-border-dark rounded focus:outline-none focus:border-retro-orange transition-colors"
+                  placeholder="e.g. http://localhost:11414"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider opacity-60">Ollama Model</label>
+                <input
+                  type="text"
+                  value={settingsModel}
+                  onChange={(e) => setSettingsModel(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-retro-panel-light dark:bg-retro-panel-dark border border-retro-border-light dark:border-retro-border-dark rounded focus:outline-none focus:border-retro-orange transition-colors"
+                  placeholder="e.g. gemma4:latest"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-2 border-t border-retro-border-light dark:border-retro-border-dark">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="px-4 py-2 text-xs border border-retro-border-light dark:border-retro-border-dark hover:bg-retro-panel-light/50 dark:hover:bg-retro-panel-dark/50 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                className="px-4 py-2 text-xs bg-retro-orange hover:bg-retro-orange/90 text-white rounded transition-colors font-medium shadow-sm"
+              >
+                Save Settings
+              </button>
             </div>
           </div>
         </div>

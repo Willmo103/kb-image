@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 const { exec } = require('child_process');
 const sqlite3 = require('sqlite3').verbose();
 
@@ -12,6 +13,39 @@ const db = new sqlite3.Database(dbPath);
 
 // Resolve package root for spawning Python CLI subprocesses
 const projectRoot = path.resolve(__dirname, '..');
+
+// Settings management (stored at ~/.kb/configs/kb-image.json)
+const configDir = path.join(os.homedir(), '.kb', 'configs');
+const configPath = path.join(configDir, 'kb-image.json');
+
+function loadSettings() {
+  const defaults = {
+    ollama_host: process.env.OLLAMA_HOST || 'http://localhost:11414',
+    ollama_model: process.env.OLLAMA_MODEL || 'gemma4:latest'
+  };
+  try {
+    if (fs.existsSync(configPath)) {
+      const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      return { ...defaults, ...data };
+    }
+  } catch (e) {
+    console.error('Error reading settings file:', e);
+  }
+  return defaults;
+}
+
+function saveSettings(settings) {
+  try {
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    fs.writeFileSync(configPath, JSON.stringify(settings, null, 2), 'utf8');
+    return { status: 'success' };
+  } catch (e) {
+    console.error('Error writing settings file:', e);
+    throw e;
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -173,8 +207,9 @@ Given the image, generate a description of the image that captures the following
 Your response may be in any format you choose to represent the description, the user trusts and relies on your judgement.`;
 
 async function callOllamaChat(systemPrompt, userPrompt, base64Image) {
-  const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11414';
-  const ollamaModel = process.env.OLLAMA_MODEL || 'gemma4:latest';
+  const settings = loadSettings();
+  const ollamaHost = settings.ollama_host;
+  const ollamaModel = settings.ollama_model;
   
   let cleanBase64 = base64Image;
   if (base64Image.includes(';base64,')) {
@@ -390,4 +425,12 @@ ipcMain.handle('ai-classify-image', async (event, { imageHash, origin }) => {
       else resolve({ status: 'success', classification });
     });
   });
+});
+
+ipcMain.handle('get-settings', async () => {
+  return loadSettings();
+});
+
+ipcMain.handle('save-settings', async (event, settings) => {
+  return saveSettings(settings);
 });

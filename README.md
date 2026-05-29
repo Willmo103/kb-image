@@ -35,7 +35,7 @@ graph TD
 
 1. **React UI Frontend (`desktop/`)**: A fast, responsive, and minimalist UI designed with custom earth-toned solarized-light/retro-dark CSS aesthetics, offering deep catalog search, classification filters, active tag filters, and image detail drawers.
 2. **Electron Shell (`desktop/`)**: Runs the desktop container. Uses native Node.js `sqlite3` to fetch thumbnails, query files, and write user tag edits directly to the local database, removing the overhead of local HTTP servers.
-3. **AI Enrichment Processes**: Communicates directly with the local Ollama API (defaulting to `http://localhost:11414`) to run 1:1 image classification, tagging, and description prompts on the `gemma4:latest` multimodal model.
+3. **AI Enrichment Processes**: Communicates directly with the local Ollama API to run 1:1 image classification, tagging, and description prompts. Settings (Ollama host and model name) are customized directly inside the desktop app and stored in `~/.kb/configs/kb-image.json`.
 4. **Python Backend Submodule (`src/kb_image/`)**: CLI helper commands that handle high-performance binary scanning, thumbnail rendering, metadata (EXIF) compilation, and batch imports. Electron triggers URL imports by invoking `uv run kb-image import` as a subprocess.
 
 ---
