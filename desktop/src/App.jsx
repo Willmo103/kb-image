@@ -34,6 +34,11 @@ export default function App() {
   const [importing, setImporting] = useState(false);
   const [newTagText, setNewTagText] = useState('');
   
+  // AI processing loading states
+  const [aiDescribing, setAiDescribing] = useState(false);
+  const [aiTagging, setAiTagging] = useState(false);
+  const [aiClassifying, setAiClassifying] = useState(false);
+  
   const classifications = [
     'nature', 'people', 'screenshots', 'diagrams', 'nsfw', 'memes', 'other'
   ];
@@ -199,6 +204,78 @@ export default function App() {
       }
     } catch (err) {
       console.error('Error updating tags:', err);
+    }
+  };
+
+  // AI Description Trigger
+  const handleAIDescribe = async () => {
+    if (!selectedImage || aiDescribing) return;
+    setAiDescribing(true);
+    try {
+      const data = await window.api.aiDescribeImage({
+        imageHash: selectedImage.image_hash,
+        origin: selectedImage.origin
+      });
+      if (data.status === 'success') {
+        const updatedImage = { ...selectedImage, description: data.description };
+        setSelectedImage(updatedImage);
+        setImages(images.map(img => img.image_hash === selectedImage.image_hash ? updatedImage : img));
+      } else {
+        alert('Failed to generate AI description.');
+      }
+    } catch (err) {
+      console.error('Error generating AI description:', err);
+      alert(`Error generating AI description: ${err.message}`);
+    } finally {
+      setAiDescribing(false);
+    }
+  };
+
+  // AI Tagging Trigger
+  const handleAITag = async () => {
+    if (!selectedImage || aiTagging) return;
+    setAiTagging(true);
+    try {
+      const data = await window.api.aiTagImage({
+        imageHash: selectedImage.image_hash,
+        origin: selectedImage.origin
+      });
+      if (data.status === 'success') {
+        const updatedImage = { ...selectedImage, tags: data.tags };
+        setSelectedImage(updatedImage);
+        setImages(images.map(img => img.image_hash === selectedImage.image_hash ? updatedImage : img));
+      } else {
+        alert('Failed to generate AI tags.');
+      }
+    } catch (err) {
+      console.error('Error generating AI tags:', err);
+      alert(`Error generating AI tags: ${err.message}`);
+    } finally {
+      setAiTagging(false);
+    }
+  };
+
+  // AI Classification Trigger
+  const handleAIClassify = async () => {
+    if (!selectedImage || aiClassifying) return;
+    setAiClassifying(true);
+    try {
+      const data = await window.api.aiClassifyImage({
+        imageHash: selectedImage.image_hash,
+        origin: selectedImage.origin
+      });
+      if (data.status === 'success') {
+        const updatedImage = { ...selectedImage, classification: data.classification };
+        setSelectedImage(updatedImage);
+        setImages(images.map(img => img.image_hash === selectedImage.image_hash ? updatedImage : img));
+      } else {
+        alert('Failed to classify image with AI.');
+      }
+    } catch (err) {
+      console.error('Error classifying image with AI:', err);
+      alert(`Error classifying image with AI: ${err.message}`);
+    } finally {
+      setAiClassifying(false);
     }
   };
 
@@ -473,6 +550,40 @@ export default function App() {
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase tracking-wider font-bold opacity-50">Origin</span>
                   <p className="text-xs font-semibold capitalize">{selectedImage.origin} storage</p>
+                </div>
+              </div>
+
+              {/* AI Actions */}
+              <div className="space-y-2 pt-2 border-t border-retro-border-light/40 dark:border-retro-border-dark/40">
+                <h3 className="text-sm font-bold uppercase tracking-wider opacity-60 flex items-center space-x-1.5">
+                  <RefreshCw size={14} className="text-retro-orange" />
+                  <span>AI Actions (Ollama)</span>
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={handleAIDescribe}
+                    disabled={aiDescribing}
+                    className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-retro-panel-light dark:bg-retro-panel-dark border border-retro-border-light dark:border-retro-border-dark hover:border-retro-orange rounded text-xs transition-colors disabled:opacity-50 text-retro-text-light dark:text-retro-text-dark"
+                  >
+                    {aiDescribing && <RefreshCw className="animate-spin text-retro-orange mr-1" size={12} />}
+                    <span>Describe Image</span>
+                  </button>
+                  <button
+                    onClick={handleAITag}
+                    disabled={aiTagging}
+                    className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-retro-panel-light dark:bg-retro-panel-dark border border-retro-border-light dark:border-retro-border-dark hover:border-retro-orange rounded text-xs transition-colors disabled:opacity-50 text-retro-text-light dark:text-retro-text-dark"
+                  >
+                    {aiTagging && <RefreshCw className="animate-spin text-retro-orange mr-1" size={12} />}
+                    <span>Generate Tags</span>
+                  </button>
+                  <button
+                    onClick={handleAIClassify}
+                    disabled={aiClassifying}
+                    className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-retro-panel-light dark:bg-retro-panel-dark border border-retro-border-light dark:border-retro-border-dark hover:border-retro-orange rounded text-xs transition-colors disabled:opacity-50 text-retro-text-light dark:text-retro-text-dark"
+                  >
+                    {aiClassifying && <RefreshCw className="animate-spin text-retro-orange mr-1" size={12} />}
+                    <span>Classify Image</span>
+                  </button>
                 </div>
               </div>
 
