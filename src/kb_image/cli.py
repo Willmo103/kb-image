@@ -138,7 +138,9 @@ def tag_images(
                     typer.echo(f"  Tags: {', '.join(tags)}")
                     tagged_count += 1
                 except Exception as ex:
-                    typer.echo(f"  Error tagging image {row.get('file_name', '')}: {ex}")
+                    typer.echo(
+                        f"  Error tagging image {row.get('file_name', '')}: {ex}"
+                    )
         except Exception as e:
             typer.echo(f"  Error querying table {table_name}: {e}")
 

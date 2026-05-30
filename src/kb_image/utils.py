@@ -13,8 +13,13 @@ from typing import Optional
 from PIL import ExifTags, Image
 from PIL.TiffImagePlugin import TiffImageFile
 
-from .config import (IMAGE_FORMATS, MIN_FILE_SIZE, MIN_SIZE_HEIGHT,
-                     MIN_SIZE_WIDTH, THUMBNAIL_SIZE)
+from .config import (
+    IMAGE_FORMATS,
+    MIN_FILE_SIZE,
+    MIN_SIZE_HEIGHT,
+    MIN_SIZE_WIDTH,
+    THUMBNAIL_SIZE,
+)
 
 
 def is_valid_image(file_path: Path) -> bool:

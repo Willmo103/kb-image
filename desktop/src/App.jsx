@@ -339,7 +339,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'dark bg-retro-bg-dark text-retro-text-dark' : 'bg-retro-bg-light text-retro-text-light'} transition-colors duration-200`}>
+    <div className={`h-screen flex flex-col ${darkMode ? 'dark bg-retro-bg-dark text-retro-text-dark' : 'bg-retro-bg-light text-retro-text-light'} transition-colors duration-200 overflow-hidden`}>
       
       {/* Header */}
       <header className="border-b border-retro-border-light dark:border-retro-border-dark py-4 px-6 flex items-center justify-between sticky top-0 bg-retro-bg-light/95 dark:bg-retro-bg-dark/95 backdrop-blur z-20">
@@ -391,10 +391,10 @@ export default function App() {
       </header>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         
         {/* Sidebar */}
-        <aside className="w-full md:w-64 p-6 border-r border-retro-border-light dark:border-retro-border-dark flex flex-col space-y-6">
+        <aside className="w-full md:w-64 p-6 border-r border-retro-border-light dark:border-retro-border-dark flex flex-col space-y-6 md:overflow-y-auto">
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wider opacity-60">Search</label>
             <div className="relative">
@@ -457,7 +457,7 @@ export default function App() {
         </aside>
 
         {/* Grid List */}
-        <main className="flex-1 p-6 flex flex-col">
+        <main className="flex-1 p-6 flex flex-col md:overflow-y-auto">
           
           <form onSubmit={handleImport} className="md:hidden flex items-center space-x-2 mb-6">
             <input

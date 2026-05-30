@@ -6,7 +6,11 @@ import sqlite_utils
 
 from kb_image.models import BaseImage, ImageClasses, ImageFile
 from kb_image.utils import is_valid_image, generate_image_hash, extract_exif
-from kb_image.process import process_file_image, save_image_to_database, hash_is_in_database
+from kb_image.process import (
+    process_file_image,
+    save_image_to_database,
+    hash_is_in_database,
+)
 
 
 def create_test_image(path: Path, width=500, height=500):
@@ -33,7 +37,7 @@ def test_models_validation():
         "image": "base64_full",
         "image_hash": "hash123",
         "classification": "nature",
-        "tags": ["landscape", "mountain"]
+        "tags": ["landscape", "mountain"],
     }
     img = BaseImage(**img_data)
     assert img.file_name == "test.png"
@@ -82,6 +86,6 @@ def test_process_and_save_image(tmp_path):
 
     # Save to db
     save_image_to_database(processed, db)
-    
+
     # Check exists
     assert hash_is_in_database(processed.image_hash, db) is True
