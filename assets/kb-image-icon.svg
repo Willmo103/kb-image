@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" fill="#F4EFEA" rx="120"/>
+  <!-- Image Frame -->
+  <rect x="212" y="212" width="600" height="600" rx="40" fill="none" stroke="#2D5A27" stroke-width="30"/>
+  <!-- Mountain Paths -->
+  <path d="M 242 750 L 462 450 L 612 620 L 782 400 L 782 750 Z" fill="#2D5A27" opacity="0.8"/>
+  <!-- Sun -->
+  <circle cx="650" cy="350" r="70" fill="#F1C40F"/>
+  <!-- Text 'kb' -->
+  <text x="350" y="380" font-family="Georgia, serif" font-size="120" font-weight="bold" fill="#D35400">kb</text>
+</svg>

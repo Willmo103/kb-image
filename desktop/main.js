@@ -58,7 +58,8 @@ function createWindow() {
     },
     // Earth-toned initial background
     backgroundColor: '#F4EFEA',
-    title: 'kb-image'
+    title: 'kb-image',
+    icon: path.join(__dirname, 'build', 'icon.png')
   });
 
   // Load the built Vite application index.html

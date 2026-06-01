@@ -1,4 +1,4 @@
-# kb-image
+# <img src="assets/kb-image-icon.svg" width="48" height="48" valign="middle" style="margin-right: 10px;"/> kb-image
 
 A standalone desktop application and CLI tool suite for cataloging, processing, and exploring personal images within the `kb` (Knowledge Base) stack.
 
