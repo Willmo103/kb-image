@@ -1,0 +1,32 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.4] - 2026-06-03
+### Changed
+- Improved code readability in `build.py` through consistent whitespace adjustments.
+
+## [0.1.3] - 2026-06-01
+### Changed
+- Added clean steps to `build.py` to purge previous dist artifacts.
+### Added
+- Electron desktop entry point and Python CLI structure with assets and documentation.
+
+## [0.1.2] - 2026-05-30
+### Changed
+- Pinned sidebar navigation menu to make only main panel scrollable.
+
+## [0.1.1] - 2026-05-29
+### Changed
+- Updated `.gitignore` to track `package-lock.json` and added lockfile to `desktop` directory.
+### Added
+- Automated CI/CD pipeline for testing, version bumping, and GitHub releases.
+
+## [0.1.0] - 2026-05-29
+### Added
+- Initial project release with React-Electron application, SQLite catalog integration, and Ollama AI image processing capabilities (Describe/Tag/Classify handlers).
+- Customizable AI settings panel for Ollama host and model configuration.
+- Consolidated codebase from legacy web structures.
