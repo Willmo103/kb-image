@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-06-06
+### Added
+- System tray collapsing and double-click restore handlers to Electron app.
+- Portable Electron binary download support inside `serve` and `install` commands when missing locally.
+- Added `install` and `update` subcommands to CLI for system path integration and updates.
+- Staged built desktop binary inside `build.py` prior to building python wheels.
+
+## [0.1.5] - 2026-06-05
+### Changed
+- Standardized package.json files packaging configuration.
+
 ## [0.1.4] - 2026-06-03
 ### Changed
 - Improved code readability in `build.py` through consistent whitespace adjustments.

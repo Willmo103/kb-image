@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -6,6 +6,7 @@ const { exec } = require('child_process');
 const sqlite3 = require('sqlite3').verbose();
 
 let mainWindow;
+let tray = null;
 
 // Resolve SQLite Database path: ~/.kb/kb.db
 const dbPath = path.join(os.homedir(), '.kb', 'kb.db');
@@ -71,13 +72,109 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'dist-frontend', 'index.html'));
   }
 
+  mainWindow.on('close', (event) => {
+    if (!app.isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+    return false;
+  });
+
+  mainWindow.on('minimize', (event) => {
+    event.preventDefault();
+    mainWindow.hide();
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
+function createTray() {
+  const trayIconPath = path.join(__dirname, 'tray-icon.png');
+  const trayIcon = fs.existsSync(trayIconPath) ? trayIconPath : path.join(__dirname, 'package.json');
+  
+  try {
+    tray = new Tray(trayIcon);
+    tray.setToolTip('kb-image library manager');
+    
+    tray.on('double-click', () => {
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+
+    updateTrayMenu();
+    setInterval(updateTrayMenu, 30000); // periodically update menu
+  } catch (e) {
+    console.error('Failed to create tray icon:', e);
+  }
+}
+
+function updateTrayMenu() {
+  if (!tray) return;
+
+  db.all("SELECT name FROM sqlite_master WHERE type='table' AND name='image_files'", (err, tables) => {
+    const menuTemplate = [
+      {
+        label: 'Open Image Manager',
+        click: () => {
+          if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        }
+      },
+      { type: 'separator' }
+    ];
+
+    if (!err && tables && tables.length > 0) {
+      db.all("SELECT file_name FROM image_files ORDER BY created DESC LIMIT 5", (err, rows) => {
+        if (!err && rows && rows.length > 0) {
+          rows.forEach((row) => {
+            menuTemplate.push({
+              label: `🖼️ ${row.file_name}`,
+              click: () => {
+                if (mainWindow) {
+                  if (mainWindow.isMinimized()) mainWindow.restore();
+                  mainWindow.show();
+                  mainWindow.focus();
+                }
+              }
+            });
+          });
+          menuTemplate.push({ type: 'separator' });
+        }
+        
+        menuTemplate.push({
+          label: 'Quit',
+          click: () => {
+            app.isQuitting = true;
+            app.quit();
+          }
+        });
+
+        tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
+      });
+    } else {
+      menuTemplate.push({
+        label: 'Quit',
+        click: () => {
+          app.isQuitting = true;
+          app.quit();
+        }
+      });
+      tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
+    }
+  });
+}
+
 app.whenReady().then(() => {
   createWindow();
+  createTray();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

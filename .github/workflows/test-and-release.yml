@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
   pull_request:
 
 permissions:
@@ -39,11 +40,11 @@ jobs:
       - name: Run Python tests
         shell: bash
         run: |
-          uv sync
+          uv sync --upgrade-package kb-core
           uv run pytest
 
       - name: Bump version and push release tag
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,8 +68,10 @@ jobs:
           # Tag the release
           git tag "v$NEW_VERSION"
           
-          # Push the commit and the tags back to master
-          git push origin HEAD:master --follow-tags
+          # Push the commit and the tags back to the active branch
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          git push origin HEAD:$BRANCH_NAME
+          git push origin "v$NEW_VERSION"
 
       - name: Build and Package Electron App
         shell: bash
@@ -84,7 +87,7 @@ jobs:
           uv build
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
