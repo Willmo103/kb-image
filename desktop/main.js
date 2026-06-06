@@ -439,8 +439,22 @@ ipcMain.handle('update-image-tags', async (event, { imageHash, tags, origin }) =
 ipcMain.handle('import-web-image', async (event, url) => {
   return new Promise((resolve, reject) => {
     // Spawns Python CLI to reuse downloading, thumbnailing, and EXIF logic
-    // Calls "uv run kb-image import --url <url>"
-    exec(`uv run kb-image import --url "${url}"`, { cwd: projectRoot }, (err, stdout, stderr) => {
+    const isDev = process.env.NODE_ENV === 'development';
+    let cmd = 'uv run kb-image';
+    let execOpts = { cwd: projectRoot };
+    
+    if (!isDev) {
+      const localBinName = os.platform() === 'win32' ? 'kb-image.exe' : 'kb-image';
+      const localBinPath = path.join(os.homedir(), '.local', 'bin', localBinName);
+      if (fs.existsSync(localBinPath)) {
+        cmd = `"${localBinPath}"`;
+      } else {
+        cmd = 'kb-image';
+      }
+      execOpts = {};
+    }
+    
+    exec(`${cmd} import --url "${url}"`, execOpts, (err, stdout, stderr) => {
       if (err) {
         console.error(`Import subprocess error: ${stderr}`);
         reject(err);
