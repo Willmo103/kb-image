@@ -46,8 +46,8 @@ class BaseImage(BaseModel):
     hight: int
     width: int
     exif_data: dict
-    thumbnail: str  # Base64-encoded thumbnail image data
-    image: str  # Base64-encoded original image data
+    thumbnail: Optional[str] = None  # Base64-encoded thumbnail image data
+    image: Optional[str] = None  # Base64-encoded original image data
     image_hash: str  # Hash of the image content for deduplication
     description: Optional[str] = (
         None  # Optional description or metadata about the image
@@ -100,6 +100,8 @@ class BaseImage(BaseModel):
         """
         Markdown image.
         """
+        if not self.image:
+            return f"[{self.file_name}](no-image)"
         return f"[{self.file_name}](data:image/{self.extension};base64,{self.image})"
 
     @property
@@ -107,6 +109,8 @@ class BaseImage(BaseModel):
         """
         Markdown thumbnail.
         """
+        if not self.thumbnail:
+            return f"[{self.file_name}](no-thumbnail)"
         return f"[{self.file_name}](data:image/jpeg;base64,{self.thumbnail})"
 
     @property

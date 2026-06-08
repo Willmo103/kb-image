@@ -25,12 +25,13 @@ from .utils import (
 )
 
 
-def process_file_image(file_path: Path) -> Optional[ImageFile]:
+def process_file_image(file_path: Path, metadata_only: bool = False) -> Optional[ImageFile]:
     """
     Process a single image file.
 
     Args:
         file_path: Path to the image file
+        metadata_only: If True, do not generate base64 image and thumbnail
 
     Returns:
         ImageFile object for the image
@@ -45,8 +46,12 @@ def process_file_image(file_path: Path) -> Optional[ImageFile]:
             exif_data = extract_exif(img)
 
         image_hash = generate_image_hash(file_path)
-        thumbnail = generate_thumbnail(file_path)
-        base64_image = generate_base64_image(file_path)
+        if metadata_only:
+            thumbnail = None
+            base64_image = None
+        else:
+            thumbnail = generate_thumbnail(file_path)
+            base64_image = generate_base64_image(file_path)
 
         return ImageFile(
             path=str(file_path),
@@ -71,7 +76,7 @@ def process_file_image(file_path: Path) -> Optional[ImageFile]:
 
 
 def process_images_in_directory(
-    directory: Path, db: sqlite_utils.Database
+    directory: Path, db: sqlite_utils.Database, metadata_only: bool = False
 ) -> Iterable[ImageFile]:
     """
     Process all image files in a directory.
@@ -79,13 +84,14 @@ def process_images_in_directory(
     Args:
         directory: Directory to process images from
         db: SQLite database
+        metadata_only: If True, do not generate base64 image and thumbnail
 
     Yields:
         ImageFile objects for each image
     """
     for file_path in directory.rglob("*"):
         if file_path.is_file():
-            image = process_file_image(file_path)
+            image = process_file_image(file_path, metadata_only=metadata_only)
             if image:
                 yield image
 
@@ -200,26 +206,47 @@ def import_web_image(url: str, db: sqlite_utils.Database):
         print(f"Error importing web image from URL {url}: {e}")
 
 
-def import_image_files_from_directory(directory: Path, db: sqlite_utils.Database):
+def import_image_files_from_directory(
+    directory: Path, db: sqlite_utils.Database, metadata_only: bool = False
+):
     """
     Import all image files from a directory into the database.
 
     Args:
         directory: Directory to import images from
         db: SQLite database
+        metadata_only: If True, do not generate base64 image and thumbnail
     """
-    for image in process_images_in_directory(directory, db):
+    for image in process_images_in_directory(directory, db, metadata_only=metadata_only):
+        if metadata_only and hash_is_in_database(image.image_hash, db):
+            try:
+                existing = db["image_files"].get(image.image_hash)
+                if existing.get("image") or existing.get("thumbnail"):
+                    continue
+            except Exception:
+                pass
         save_image_to_database(image, db)
 
 
-def import_image_file(file_path: Path, db: sqlite_utils.Database):
+def import_image_file(
+    file_path: Path, db: sqlite_utils.Database, metadata_only: bool = False
+):
     """
     Import a single image file into the database.
 
     Args:
         file_path: Path to the image file
         db: SQLite database
+        metadata_only: If True, do not generate base64 image and thumbnail
     """
-    image = process_file_image(file_path)
-    if image and not hash_is_in_database(image.image_hash, db):
-        save_image_to_database(image, db)
+    image = process_file_image(file_path, metadata_only=metadata_only)
+    if image:
+        if metadata_only and hash_is_in_database(image.image_hash, db):
+            try:
+                existing = db["image_files"].get(image.image_hash)
+                if existing.get("image") or existing.get("thumbnail"):
+                    return
+            except Exception:
+                pass
+        if not hash_is_in_database(image.image_hash, db) or not metadata_only:
+            save_image_to_database(image, db)

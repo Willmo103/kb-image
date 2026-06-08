@@ -46,6 +46,12 @@ def import_images(
         help="URL of a web image to import. If provided, imports \
         the image from the URL instead of local files.",
     ),
+    quick: bool = typer.Option(
+        False,
+        "-q",
+        "--quick",
+        help="Import image metadata only, skipping base64 image and thumbnail generation.",
+    ),
 ):
     """Import images into the knowledge base from a specified directory or a
     single file. Only one of --dir or --file should be provided. If both
@@ -54,9 +60,9 @@ def import_images(
     if url:
         return import_web_image(url, _db)
     elif file:
-        return import_image_file(Path(file), _db)
+        return import_image_file(Path(file), _db, metadata_only=quick)
     elif directory:
-        return import_image_files_from_directory(Path(directory), _db)
+        return import_image_files_from_directory(Path(directory), _db, metadata_only=quick)
     else:
         typer.echo(
             "Please provide either a directory with --dir or a single file with --file, "
@@ -384,6 +390,90 @@ def tag_images(
             typer.echo(f"  Error querying table {table_name}: {e}")
 
     typer.echo(f"Finished tagging. Tagged {tagged_count} images.")
+
+
+@kb_image_cli.command("fill")
+def fill(
+    all_records: bool = typer.Option(
+        False,
+        "--all",
+        help="Find all records in the database where image (or thumbnail) is NULL or empty, and back-fill them.",
+    ),
+    limit: Optional[int] = typer.Option(
+        None,
+        "--limit",
+        help="Limit the number of files to back-fill in this run.",
+    ),
+    image_hash: Optional[str] = typer.Option(
+        None,
+        "--hash",
+        help="Back-fill a specific image matching the content hash.",
+    ),
+    image_path: Optional[str] = typer.Option(
+        None,
+        "--path",
+        help="Back-fill a specific image matching the file path.",
+    ),
+):
+    """Back-fill missing image data (full base64 and thumbnail) from disk."""
+    query = "SELECT * FROM image_files"
+    params = {}
+
+    if image_hash:
+        query += " WHERE image_hash = :image_hash"
+        params["image_hash"] = image_hash
+    elif image_path:
+        query += " WHERE path = :path"
+        params["path"] = image_path
+    elif all_records:
+        query += " WHERE image IS NULL OR image = '' OR thumbnail IS NULL OR thumbnail = ''"
+    else:
+        typer.echo("Please specify either --all, --hash <hash>, or --path <path> to back-fill.")
+        raise typer.Exit(code=1)
+
+    if limit is not None:
+        query += " LIMIT :limit"
+        params["limit"] = limit
+
+    try:
+        rows = list(_db.query(query, params))
+    except Exception as e:
+        typer.echo(f"Error querying database: {e}")
+        raise typer.Exit(code=1)
+
+    if not rows:
+        typer.echo("No matching records found to back-fill.")
+        return
+
+    from .utils import generate_thumbnail, generate_base64_image
+
+    filled_count = 0
+    for row in rows:
+        path_str = row.get("path")
+        h = row.get("image_hash")
+        if not path_str or not h:
+            continue
+
+        file_path = Path(path_str)
+        if not file_path.exists() or not file_path.is_file():
+            typer.echo(f"Warning: File no longer exists at path: {path_str}. Skipping.")
+            continue
+
+        try:
+            typer.echo(f"Back-filling image data for: {file_path.name} ({h[:8]})...")
+            thumbnail = generate_thumbnail(file_path)
+            base64_image = generate_base64_image(file_path)
+
+            _db["image_files"].update(h, {
+                "thumbnail": thumbnail,
+                "image": base64_image
+            })
+            typer.echo(f"  Successfully back-filled {file_path.name}")
+            filled_count += 1
+        except Exception as ex:
+            typer.echo(f"  Error processing file {file_path.name}: {ex}")
+
+    typer.echo(f"Finished. Back-filled {filled_count} images.")
 
 
 # Future --- IGNORE AND LEAVE ALONE FOR NOW ---
